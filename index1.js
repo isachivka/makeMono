@@ -1,5 +1,11 @@
 const { spawn } = require('child_process');
-const { flatten, groupBy, mapValues, first } = require('lodash');
+const {
+  flatten,
+  groupBy,
+  mapValues,
+  first,
+  pickBy,
+} = require('lodash');
 
 const reps = require('./config');
 const resultPath = './result';
@@ -43,19 +49,42 @@ const getBranchesSource = () => new Promise(function(resolve) {
   });
 });
 
-const fillGroup = develop => b => {
+const releasesRegExp = /^releases\//;
+const releasesReqProjects = ['jsfcore', 'jsfiller3', 'ws-editor-lib'];
+
+const trueregexp = /^trueed/i;
+
+const fillGroup = develop => (b, k) => {
   const branch = { ...b };
-  for (var i = 0; i < projectNames.length; i++) {
+  for (let i = 0; i < projectNames.length; i++) {
     const projectName = projectNames[i]
+
+    // filter trueedit branches
+    if (trueregexp.test(k)) {
+      return null
+    }
+
+    // filter inconsistent releases branches
+    if (releasesRegExp.test(k)) {
+      for (let a = 0; a < releasesReqProjects.length; a++) {
+        const reqProject = releasesReqProjects[a];
+        if (!branch.hasOwnProperty(reqProject)) {
+          return null;
+        }
+      }
+    }
     if (!branch.hasOwnProperty(projectName)) {
-      branch
-      console.log(branch, projectName, develop);
+      branch[projectName] = develop[projectName];
     }
   }
   return branch;
 }
 
-const groupBranches = branches => {
+const omitEmptyGroups = (groups) => {
+  return pickBy(groups, e => e)
+}
+
+const groupBranches = async (branches) => {
   const group = mapValues(
     groupBy(branches, (e) => {
       return e.replace(/^[^\/]+\//, '');
@@ -65,10 +94,80 @@ const groupBranches = branches => {
       {}
     )
   )
-  const filledGroups = mapValues(group, fillGroup(group.develop))
-  console.log(JSON.stringify(filledGroups));
+
+  const withAuth = await appendAuthors(group);
+
+  const filledGroups = omitEmptyGroups(
+    mapValues(
+      withAuth,
+      fillGroup(withAuth.develop)
+    )
+  );
   return filledGroups
+};
+
+const getAuthor = (branchName, orBranchName) => new Promise((resolve) => {
+  const proc = spawn('git', ['log', branchName, '-n', 1, '--pretty="%aE"'], { cwd: resultPath });
+  const result = [];
+  proc.stdout.on('data', (data) => {
+    result.push(
+      data
+        .toString('utf-8')
+    )
+  });
+  proc.on('close', (code) => {
+    resolve({ authors: flatten(result), orBranchName });
+  });
+});
+
+const getAuthors = (projects, branchName) => Promise.all(
+  Object.keys(projects).map((key) => getAuthor(projects[key], branchName)),
+);
+
+const appendAuthors = async (groups) => {
+  return new Promise(async (resolve) => {
+    let authors = []
+    const keys = Object.keys(groups);
+    for (var i = 0; i < keys.length; i++) {
+      const branchName = keys[i]
+      const projects = groups[branchName];
+
+      authors.push(await getAuthors(projects, branchName));
+    }
+    authors = mapValues(
+      groupBy(
+        flatten(authors),
+        auth => auth.orBranchName,
+      ),
+      (arr) => (flatten([ arr.map(a => a.authors) ]))
+    )
+
+    grWithAuth = mapValues(groups, (val, key) => ({
+      ...val,
+      authors: flatten(authors[key]),
+    }));
+
+    // console.log(JSON.stringify({ grWithAuth }));
+    resolve(grWithAuth);
+  });
 }
+
+const logBranchByAuthor = groupped => {
+  console.log(
+    Object.keys(groupped).reduce((acc, branch) => {
+      const obj = groupped[branch];
+      for (var i = 0; i < obj.authors.length; i++) {
+        const author = obj.authors[i];
+        if (acc[author]) {
+          acc[author].push(branch)
+        } else {
+          acc[author] = [branch];
+        }
+      }
+      return acc;
+    }, {})
+  );
+};
 
 ;(async () => {
   // await Promise.all(
@@ -81,6 +180,7 @@ const groupBranches = branches => {
   // )
 
   const branchesSource = await getBranchesSource();
-  const groupped = groupBranches(branchesSource);
-  // console.log(groupped);
+  const groupped = await groupBranches(branchesSource);
+  // logBranchByAuthor(groupped);
+  console.log(groupped);
 })()
