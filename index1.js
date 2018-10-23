@@ -5,6 +5,7 @@ const {
   mapValues,
   first,
   pickBy,
+  pick,
 } = require('lodash');
 
 const reps = require('./config');
@@ -106,6 +107,13 @@ const groupBranches = async (branches) => {
   return filledGroups
 };
 
+const promiseSpawn = (...args) => new Promise((resolve) => {
+  const proc = spawn(...args, { cwd: resultPath });
+  proc.on('close', (code) => {
+    resolve();
+  });
+});
+
 const getAuthor = (branchName, orBranchName) => new Promise((resolve) => {
   const proc = spawn('git', ['log', branchName, '-n', 1, '--pretty="%aE"'], { cwd: resultPath });
   const result = [];
@@ -169,6 +177,24 @@ const logBranchByAuthor = groupped => {
   );
 };
 
+mergeProjectBranch = ({ project, branch, projectBranch }) => new Promise((resolve) => {
+  console.log({ project, branch, projectBranch });
+  promiseSpawn('git', ['checkout', projectBranch])
+  resolve();
+});
+
+const mergeBranch = ({ branch, projects }) => Promise.all(
+  Object
+    .keys(projects)
+    .map(
+      (project) => mergeProjectBranch({
+        project,
+        branch,
+        projectBranch: projects[project]
+      })
+    )
+);
+
 ;(async () => {
   // await Promise.all(
   //   projectNames.map(async (projectName) => {
@@ -182,5 +208,11 @@ const logBranchByAuthor = groupped => {
   const branchesSource = await getBranchesSource();
   const groupped = await groupBranches(branchesSource);
   // logBranchByAuthor(groupped);
-  console.log(groupped);
+  const develop = pick(groupped, ['develop'])
+  for (var branch in develop) {
+    if (develop.hasOwnProperty(branch)) {
+      await mergeBranch({ branch, projects: pick(develop[branch], projectNames) })
+    }
+  }
+  // console.log(develop);
 })()
