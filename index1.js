@@ -46,6 +46,7 @@ const getBranchesSource = () => new Promise(function(resolve) {
     )
   });
   proc.on('close', (code) => {
+    console.log({ code });
     resolve(flatten(result));
   });
 });
@@ -107,8 +108,17 @@ const groupBranches = async (branches) => {
   return filledGroups
 };
 
-const promiseSpawn = (...args) => new Promise((resolve) => {
-  const proc = spawn(...args, { cwd: resultPath });
+const promiseSpawn = (cmd, opts, debug = false) => new Promise((resolve) => {
+  const proc = spawn(cmd, opts, { cwd: resultPath });
+  if (debug) {
+    console.log('promiseSpawn', cmd, opts.join(' '));
+    proc.stdout.on('data', (data) => {
+      console.log(`stdout: ${data}`);
+    });
+    proc.stderr.on('data', (data) => {
+      console.log(`stderr: ${data}`);
+    });
+  }
   proc.on('close', (code) => {
     resolve();
   });
@@ -177,42 +187,46 @@ const logBranchByAuthor = groupped => {
   );
 };
 
-mergeProjectBranch = ({ project, branch, projectBranch }) => new Promise((resolve) => {
-  console.log({ project, branch, projectBranch });
-  promiseSpawn('git', ['checkout', projectBranch])
-  resolve();
-});
+mergeProjectBranch = ({ project, branch, projectBranch }) =>
+  promiseSpawn('bash', ['../merge.sh', projectBranch, project, branch], true);
 
-const mergeBranch = ({ branch, projects }) => Promise.all(
-  Object
-    .keys(projects)
-    .map(
-      (project) => mergeProjectBranch({
-        project,
-        branch,
-        projectBranch: projects[project]
-      })
-    )
-);
+const mergeBranch = async ({ branch, projects }) => {
+  const keys = Object.keys(projects);
+  for (let i = 0; i < keys.length; i++) {
+    const project = keys[i]
+    await mergeProjectBranch({
+      project,
+      branch,
+      projectBranch: projects[project]
+    })
+  }
+};
 
 ;(async () => {
-  // await Promise.all(
-  //   projectNames.map(async (projectName) => {
-  //     await initResult();
-  //     const git = reps[projectName];
-  //     await addRemote(projectName, git);
-  //     await fetch(projectName);
-  //   })
-  // )
+  console.log('initResult');
+  await initResult();
+  await Promise.all(
+    projectNames.map(async (projectName) => {
+      const git = reps[projectName];
+      await addRemote(projectName, git);
+      console.log('addRemote');
+      await fetch(projectName);
+      console.log('fetch');
+    })
+  )
 
+  console.log('getBranchesSource');
   const branchesSource = await getBranchesSource();
+  console.log('groupBranches');
   const groupped = await groupBranches(branchesSource);
   // logBranchByAuthor(groupped);
   const develop = pick(groupped, ['develop'])
   for (var branch in develop) {
     if (develop.hasOwnProperty(branch)) {
+      console.log('mergeBranch', branch);
       await mergeBranch({ branch, projects: pick(develop[branch], projectNames) })
+      return;
     }
   }
-  // console.log(develop);
+  console.log(develop);
 })()
