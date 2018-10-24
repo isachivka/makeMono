@@ -3,7 +3,6 @@
 git checkout -B local/$1 $1
 bash ../mv.sh $2 > /dev/null
 git add .
-printf "commit moved $1 $2 $3"
 git commit -m "Moved project to packages/* folder" > /dev/null
 # git checkout master
 # git checkout -b $3

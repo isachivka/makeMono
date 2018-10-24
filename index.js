@@ -195,14 +195,22 @@ const mvBranch = async ({ branch, projects }) => {
     const project = keys[i]
     await mvProjectBranch({
       project,
-      branch,
       projectBranch: projects[project]
     })
+    if (project === 'jsfcore' || project === 'ws-editor-lib') {
+      await mvSrc({
+        project,
+        projectBranch: projects[project]
+      })
+    }
   }
 };
 
-mvProjectBranch = ({ project, branch, projectBranch }) =>
-  promiseSpawn('bash', ['../mvcommit.sh', projectBranch, project, branch], true);
+const mvSrc = ({ project, projectBranch }) =>
+  promiseSpawn('bash', ['../mvsrc.sh', projectBranch, project]);
+
+const mvProjectBranch = ({ project, projectBranch }) =>
+  promiseSpawn('bash', ['../mvcommit.sh', projectBranch, project]);
 
 const octopusMerge = async ({ projectNames, branch, projects }) =>
   promiseSpawn(
