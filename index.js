@@ -239,6 +239,7 @@ const octopusMerge = async ({ projectNames, branch, projects }) =>
   console.log('groupBranches');
   const groupped = await groupBranches(branchesSource);
   // logBranchByAuthor(groupped);
+  // console.log(JSON.stringify(groupped));
   const develop = pick(groupped, ['develop'])
   for (var branch in develop) {
     if (develop.hasOwnProperty(branch)) {
