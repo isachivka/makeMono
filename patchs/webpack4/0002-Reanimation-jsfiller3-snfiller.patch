@@ -1,0 +1,369 @@
+From 80c6e62bba9e16a51972fdb0be893e85daa40efc Mon Sep 17 00:00:00 2001
+From: Igor Sachivka <juicy.igor@gmail.com>
+Date: Fri, 26 Oct 2018 10:50:05 +0300
+Subject: [PATCH 2/2] Reanimation jsfiller3/snfiller
+
+---
+ packages/jsfcore/package.json                 |  5 +-
+ packages/jsfiller3/package.json               | 16 ++---
+ .../serverLogger/utils/getJSFCoreVersion.js   |  2 +-
+ .../serverLogger/utils/getWSLibVersion.js     |  2 +-
+ packages/jsfiller3/webpack.config.override.js | 29 ++++++--
+ packages/snfiller/package.json                | 22 +++----
+ .../serverLogger/utils/getJSFCoreVersion.js   |  2 +-
+ .../serverLogger/utils/getWSLibVersion.js     |  2 +-
+ packages/snfiller/webpack.config.override.js  | 66 +++++++++++++++++++
+ .../controllers/NetController/index.js        |  2 +-
+ packages/ws-editor-lib/package.json           |  4 +-
+ 11 files changed, 118 insertions(+), 34 deletions(-)
+ create mode 100644 packages/snfiller/webpack.config.override.js
+
+diff --git a/packages/jsfcore/package.json b/packages/jsfcore/package.json
+index 46d73881c..1ab278648 100644
+--- a/packages/jsfcore/package.json
++++ b/packages/jsfcore/package.json
+@@ -15,7 +15,7 @@
+     "test-watchAll": "jest --watchAll"
+   },
+   "dependencies": {
+-    "@pdffiller/jsf-build-tools": "^0.4.8",
++    "@pdffiller/jsf-build-tools": "^1.0.1",
+     "async": "^2.1.4",
+     "config": "^1.25.1",
+     "dateformat": "^2.2.0",
+@@ -25,7 +25,7 @@
+     "element-resize-detector": "^1.1.10",
+     "is-retina": "^1.0.3",
+     "jsfiller.ui": "0.0.94",
+-    "log4js": "^1.1.1",
++    "log4js": "^2.3.4",
+     "node-request-context": "1.0.4",
+     "object-hash": "^1.2.0",
+     "object-sizeof": "^1.2.0",
+@@ -50,7 +50,6 @@
+     "webfontloader": "^1.6.28"
+   },
+   "devDependencies": {
+-    "api-rest-component": "^2.0.3",
+     "babel-core": "^7.0.0-bridge.0",
+     "combine-modals": "^2.0.7",
+     "core-components": "^2.0.3",
+diff --git a/packages/jsfiller3/package.json b/packages/jsfiller3/package.json
+index 5ddd9f52f..7917dd793 100644
+--- a/packages/jsfiller3/package.json
++++ b/packages/jsfiller3/package.json
+@@ -4,13 +4,13 @@
+   "private": true,
+   "description": "JS client of PDFFiller",
+   "scripts": {
+-    "build": "node ./node_modules/@pdffiller/jsf-build-tools build --release",
+-    "build-stats": "node ./node_modules/@pdffiller/jsf-build-tools build --release --analyse",
++    "build": "node ../../node_modules/@pdffiller/jsf-build-tools build --release",
++    "build-stats": "node ../../node_modules/@pdffiller/jsf-build-tools build --release --analyse",
+     "lint": "eslint src tools",
+-    "lint-ci": "eslint src -f json -o lint.json && node ./node_modules/eslint-teamcity/index.js lint.json",
++    "lint-ci": "eslint src -f json -o lint.json && node ../../node_modules/eslint-teamcity/index.js lint.json",
+     "lint-fix": "eslint src tools --fix",
+     "run-builded": "npm-env NODE_ENV=production node build/server",
+-    "start": "npm-env NODE_ENV=development node ./node_modules/@pdffiller/jsf-build-tools start",
++    "start": "npm-env NODE_ENV=development node ../../node_modules/@pdffiller/jsf-build-tools start",
+     "test": "jest",
+     "test-all": "npm-env JEST_ALL=true jest",
+     "test-all-symlinks": "npm-env JEST_ALL=true JEST_SYM=true jest",
+@@ -20,11 +20,11 @@
+     "test-watchAll": "jest --watchAll"
+   },
+   "dependencies": {
+-    "@pdffiller/jsf-build-tools": "^0.4.8",
++    "@pdffiller/jsf-build-tools": "^1.0.1",
+     "address-book-component": "2.0.4",
+     "api-rest-component": "^2.0.3",
+     "body-parser": "^1.17.1",
+-    "combine-modals": "2.0.9",
++    "combine-modals": "^2.0.9",
+     "compression": "^1.7.0",
+     "config": "^1.25.1",
+     "core-components": "^2.0.3",
+@@ -77,8 +77,8 @@
+     "verge": "^1.9.1",
+     "webfontloader": "^1.6.28",
+     "webpack": "^4.19.1",
+-    "webpack-vendors-commons": "4.0.17",
+-    "webpack-vendors-jsfiller": "1.0.15",
++    "webpack-vendors-commons": "^4.0.19",
++    "webpack-vendors-jsfiller": "^1.0.17",
+     "websocket-client": "1.0.35"
+   },
+   "devDependencies": {
+diff --git a/packages/jsfiller3/src/modules/serverLogger/utils/getJSFCoreVersion.js b/packages/jsfiller3/src/modules/serverLogger/utils/getJSFCoreVersion.js
+index d11121e0b..8971db55c 100644
+--- a/packages/jsfiller3/src/modules/serverLogger/utils/getJSFCoreVersion.js
++++ b/packages/jsfiller3/src/modules/serverLogger/utils/getJSFCoreVersion.js
+@@ -1,6 +1,6 @@
+ const getJSFCoreVersion = () => {
+   // eslint-disable-next-line
+-  return require('jsfcore/../package.json').version;
++  return require('jsfcore/package.json').version;
+ };
+ 
+ export default getJSFCoreVersion;
+diff --git a/packages/jsfiller3/src/modules/serverLogger/utils/getWSLibVersion.js b/packages/jsfiller3/src/modules/serverLogger/utils/getWSLibVersion.js
+index 42a3df215..ad8181e12 100644
+--- a/packages/jsfiller3/src/modules/serverLogger/utils/getWSLibVersion.js
++++ b/packages/jsfiller3/src/modules/serverLogger/utils/getWSLibVersion.js
+@@ -1,6 +1,6 @@
+ const getWSLibVersion = () => {
+   // eslint-disable-next-line
+-  return require('ws-editor-lib/../package.json').version;
++  return require('ws-editor-lib/package.json').version;
+ };
+ 
+ export default getWSLibVersion;
+diff --git a/packages/jsfiller3/webpack.config.override.js b/packages/jsfiller3/webpack.config.override.js
+index a35d58d6c..b105ee992 100644
+--- a/packages/jsfiller3/webpack.config.override.js
++++ b/packages/jsfiller3/webpack.config.override.js
+@@ -1,21 +1,36 @@
+ const modulePath = require('@pdffiller/jsf-build-tools/lib/tools/module-path.js');
+ 
++const path = require('path');
++const TerserPlugin = require('terser-webpack-plugin');
+ const { vendorsCommonPlugin } = require('webpack-vendors-commons');
+ const { vendorsJsFillerPlugin } = require('webpack-vendors-jsfiller');
+ 
+ const all = (config) => {
++  config.module.rules[0].options.cacheDirectory = '../../.cache/babel-loader';
++  
+   const overridedConfig = {
+     ...config,
+     resolve: {
+       ...config.resolve,
+       alias: {
+         ...config.resolve.alias,
+-        'image-signature-manager-component': modulePath('image-signature-manager-component'),
+-        'page-rearrange': modulePath('page-rearrange'),
+-        'pdf-render-component': modulePath('pdf-render-component'),
++        'image-signature-manager-component': process.cwd() + '/../../node_modules/image-signature-manager-component/lib',
++        'page-rearrange': process.cwd() + '/../../node_modules/page-rearrange/lib',
++        'pdf-render-component': process.cwd() + '/../../node_modules/pdf-render-component/lib',
+       },
+     },
++
++    optimization: {
++      minimizer: [
++        new TerserPlugin({
++          cache: '../../.cache/terser',
++          parallel: true,
++          sourceMap: true,
++        }),
++      ],
++    },
+   };
++    
+   return overridedConfig;
+ };
+ 
+@@ -26,8 +41,12 @@ const client = (config) => {
+       ? config.plugins
+       : [
+         ...config.plugins,
+-        vendorsCommonPlugin(),
+-        vendorsJsFillerPlugin(),
++        vendorsCommonPlugin({ 
++          context: path.resolve(process.cwd(), '../..'),
++        }),
++        vendorsJsFillerPlugin({ 
++          context: path.resolve(process.cwd(), '../..'),
++        }),
+       ],
+   };
+   return overridedConfig;
+diff --git a/packages/snfiller/package.json b/packages/snfiller/package.json
+index 40b8c1f1e..103e62f12 100644
+--- a/packages/snfiller/package.json
++++ b/packages/snfiller/package.json
+@@ -14,9 +14,9 @@
+     "not ie < 9"
+   ],
+   "dependencies": {
+-    "@pdffiller/jsf-build-tools": "0.4.4",
++    "@pdffiller/jsf-build-tools": "^1.0.1",
+     "@webscopeio/react-textarea-autocomplete": "^2.3.3",
+-    "api-rest-component": "1.0.82",
++    "api-rest-component": "^2.0.3",
+     "async": "^2.1.4",
+     "autoprefixer": "^8.6.3",
+     "body-parser": "^1.18.3",
+@@ -36,12 +36,12 @@
+     "hot-shots": "4.7.0",
+     "is-retina": "^1.0.3",
+     "jsesc": "^2.5.1",
+-    "lodash": "4.17.4",
++    "lodash": "4.17.11",
+     "log4js": "^2.3.4",
+     "minilog": "^3.1.0",
+-    "moment": "2.20.1",
++    "moment": "2.22.2",
+     "mousetrap": "^1.6.2",
+-    "nerdamer": "0.7.15",
++    "nerdamer": "^0.7.11",
+     "node-request-context": "^1.0.4",
+     "npm-env": "^2.1.0",
+     "null-loader": "^0.1.1",
+@@ -82,7 +82,7 @@
+     "useragent.js": "^0.5.6",
+     "verge": "^1.9.1",
+     "webfontloader": "^1.6.28",
+-    "webpack-vendors-commons": "4.0.8",
++    "webpack-vendors-commons": "^4.0.19",
+     "whatwg-fetch": "^2.0.4",
+     "write-file-atomic": "^2.3.0"
+   },
+@@ -102,17 +102,17 @@
+     "rimraf": "^2.6.2"
+   },
+   "scripts": {
+-    "build": "node ./node_modules/@pdffiller/jsf-build-tools build --release",
+-    "serve": "node ./node_modules/@pdffiller/jsf-build-tools runServer",
+-    "start": "npm-env NODE_ENV=development node ./node_modules/@pdffiller/jsf-build-tools start",
++    "build": "node ../../node_modules/@pdffiller/jsf-build-tools build --release",
++    "serve": "node ../../node_modules/@pdffiller/jsf-build-tools runServer",
++    "start": "npm-env NODE_ENV=development node ../../node_modules/@pdffiller/jsf-build-tools start",
+     "run-builded": "npm-env NODE_ENV=production node build/server",
+-    "build-stats": "node ./node_modules/@pdffiller/jsf-build-tools build --release --analyse",
++    "build-stats": "node ../../node_modules/@pdffiller/jsf-build-tools build --release --analyse",
+     "test": "jest",
+     "test-ci": "jest",
+     "test-watch": "jest --watch",
+     "test-watchAll": "jest --watchAll",
+     "test-cover": "jest --coverage",
+     "lint": "eslint src tools",
+-    "lint-ci": "eslint src -f json -o lint.json && node ./node_modules/eslint-teamcity/index.js lint.json"
++    "lint-ci": "eslint src -f json -o lint.json && node ../../node_modules/eslint-teamcity/index.js lint.json"
+   }
+ }
+diff --git a/packages/snfiller/src/modules/serverLogger/utils/getJSFCoreVersion.js b/packages/snfiller/src/modules/serverLogger/utils/getJSFCoreVersion.js
+index 3165ea79c..88491f799 100644
+--- a/packages/snfiller/src/modules/serverLogger/utils/getJSFCoreVersion.js
++++ b/packages/snfiller/src/modules/serverLogger/utils/getJSFCoreVersion.js
+@@ -1,3 +1,3 @@
+-const getJSFCoreVersion = () => require('jsfcore/../package.json').version;
++const getJSFCoreVersion = () => require('jsfcore/package.json').version;
+ 
+ export default getJSFCoreVersion;
+diff --git a/packages/snfiller/src/modules/serverLogger/utils/getWSLibVersion.js b/packages/snfiller/src/modules/serverLogger/utils/getWSLibVersion.js
+index e7b724365..d0e2f281a 100644
+--- a/packages/snfiller/src/modules/serverLogger/utils/getWSLibVersion.js
++++ b/packages/snfiller/src/modules/serverLogger/utils/getWSLibVersion.js
+@@ -1,3 +1,3 @@
+-const getWSLibVersion = () => require('ws-editor-lib/../package.json').version;
++const getWSLibVersion = () => require('ws-editor-lib/package.json').version;
+ 
+ export default getWSLibVersion;
+diff --git a/packages/snfiller/webpack.config.override.js b/packages/snfiller/webpack.config.override.js
+new file mode 100644
+index 000000000..b9523261e
+--- /dev/null
++++ b/packages/snfiller/webpack.config.override.js
+@@ -0,0 +1,66 @@
++const modulePath = require('@pdffiller/jsf-build-tools/lib/tools/module-path.js');
++
++const path = require('path');
++const TerserPlugin = require('terser-webpack-plugin');
++const { vendorsCommonPlugin } = require('webpack-vendors-commons');
++
++const all = (config) => {
++  config.module.rules[0].options.cacheDirectory = '../../.cache/babel-loader';
++  
++  const overridedConfig = {
++    ...config,
++
++    optimization: {
++      minimizer: [
++        new TerserPlugin({
++          cache: '../../.cache/terser',
++          parallel: true,
++          sourceMap: true,
++        }),
++      ],
++    },
++  };
++    
++  return overridedConfig;
++};
++
++const client = (config) => {
++  
++  const overridedConfig = {
++    ...config,
++    plugins: config.mode === 'development'
++      ? config.plugins
++      : [
++        ...config.plugins,
++        vendorsCommonPlugin({ 
++          context: path.resolve(process.cwd(), '../..'),
++        }),
++      ],
++    
++    optimization: {
++      ...config.optimization,
++      splitChunks: {
++        cacheGroups: {
++          commons: {
++            chunks: 'all',
++            test: (module, chunks) => {
++              return /node_modules/.test(module.resource);
++            },
++            name: 'vendors',
++          },
++        },
++      },
++    },
++  };
++
++  return overridedConfig;
++};
++
++const server = (config) => {
++  const overridedConfig = {
++    ...config,
++  };
++  return overridedConfig;
++};
++
++module.exports = { all, client, server };
+diff --git a/packages/ws-editor-lib/controllers/NetController/index.js b/packages/ws-editor-lib/controllers/NetController/index.js
+index b65486629..120a44d58 100644
+--- a/packages/ws-editor-lib/controllers/NetController/index.js
++++ b/packages/ws-editor-lib/controllers/NetController/index.js
+@@ -15,7 +15,7 @@ import {
+ } from '../../store/models/Operations/Utils';
+ import { getUserAndAPIHash, getParameterByName, getHostname, isLocalhost } from '../../store/helpers';
+ import actions from '../../actions';
+-import config from '../../../config';
++import config from '../../config';
+ import { getFilteredOperations } from './netControllerUtils';
+ 
+ import getOptimizeAndSend from './optimizeAndSend';
+diff --git a/packages/ws-editor-lib/package.json b/packages/ws-editor-lib/package.json
+index 452083707..f5385fcf9 100644
+--- a/packages/ws-editor-lib/package.json
++++ b/packages/ws-editor-lib/package.json
+@@ -25,12 +25,12 @@
+     "test-watchAll": "jest --watchAll"
+   },
+   "dependencies": {
+-    "@pdffiller/jsf-build-tools": "^0.4.8"
++    "@pdffiller/jsf-build-tools": "^1.0.1"
+   },
+   "devDependencies": {
+     "api-rest-component": "^2.0.3",
+     "babel-core": "^7.0.0-bridge.0",
+-    "combine-modals": "^2.0.7",
++    "combine-modals": "2.0.9",
+     "core-components": "^2.0.3",
+     "deep-freeze": "0.0.1",
+     "enzyme": "^3.7.0",
+-- 
+2.17.1 (Apple Git-112)
+
