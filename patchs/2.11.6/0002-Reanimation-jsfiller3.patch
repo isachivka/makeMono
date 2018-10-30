@@ -1,0 +1,275 @@
+From fc835f8c31dda7110e2e9e93be7f3f0ea28f32a6 Mon Sep 17 00:00:00 2001
+From: Igor Sachivka <juicy.igor@gmail.com>
+Date: Tue, 30 Oct 2018 03:12:09 +0300
+Subject: [PATCH 2/4] Reanimation jsfiller3
+
+---
+ .babelrc                                      | 51 +++++++++++++++++++
+ package.json                                  | 30 +----------
+ packages/jsfcore/package.json                 |  6 +--
+ packages/jsfiller3/config/development.json    |  2 +-
+ packages/jsfiller3/package.json               |  4 +-
+ .../serverLogger/utils/getJSFCoreVersion.js   |  2 +-
+ .../serverLogger/utils/getWSLibVersion.js     |  2 +-
+ packages/jsfiller3/webpack/es6modules.js      |  3 ++
+ packages/jsfiller3/webpack/webpack.config.js  | 19 ++++---
+ .../controllers/NetController/index.js        |  2 +-
+ 10 files changed, 71 insertions(+), 50 deletions(-)
+ create mode 100644 .babelrc
+
+diff --git a/.babelrc b/.babelrc
+new file mode 100644
+index 000000000..b9bebffbc
+--- /dev/null
++++ b/.babelrc
+@@ -0,0 +1,51 @@
++{
++  "env": {
++    "development": {
++      "compact": false,
++      "presets": [
++        "react",
++        ["es2015", {"modules": "commonjs"}],
++        "stage-0"
++      ],
++      "plugins": [
++        "add-module-exports",
++        "transform-runtime",
++        "transform-decorators-legacy",
++        "transform-react-display-name",
++        ["transform-builtin-extend", {"globals": ["Error"]}]
++      ]
++    },
++    "production": {
++      "compact": false,
++      "presets": [
++        ["es2015", {"modules": false}],
++        "react",
++        "stage-0"
++      ],
++      "plugins": [
++        "transform-runtime",
++        "syntax-export-extensions",
++        "transform-export-extensions",
++        "transform-decorators-legacy",
++        "transform-react-display-name",
++        ["transform-builtin-extend", {"globals": ["Error"]}]
++      ]
++    },
++    "es6": {
++      "compact": false,
++      "presets": [
++        ["es2015", {"modules": false}],
++        "react",
++        "stage-0"
++      ],
++      "plugins": [
++        "syntax-export-extensions",
++        "transform-runtime",
++        "transform-export-extensions",
++        "transform-decorators-legacy",
++        "transform-react-display-name",
++        ["transform-builtin-extend", {"globals": ["Error"]}]
++      ]
++    }
++  }
++}
+diff --git a/package.json b/package.json
+index 69f9333ed..902e8be84 100644
+--- a/package.json
++++ b/package.json
+@@ -4,34 +4,6 @@
+     "packages/*"
+   ],
+   "dependencies": {
+-    "classnames": "2.2.6",
+-    "core-js": "2.5.7",
+-    "lodash": "4.17.11",
+-    "moment": "2.22.2",
+-    "prop-types": "15.6.2",
+-    "react": "16.5.2",
+-    "react-dom": "16.5.2",
+-    "react-redux": "5.0.6",
+-    "redux": "3.5.2",
+-    "redux-saga": "0.16.0",
+-    "redux-thunk": "2.3.0",
+-    "reselect": "4.0.0",
+-    "hammerjs": "^2.0.8",
+-    "keymirror": "^0.1.1",
+-    "minilog": "^3.1.0",
+-    "mobile-detect": "^1.3.6",
+-    "nerdamer": "^0.7.11",
+-    "numeral": "^2.0.6",
+-    "object-hash": "^1.2.0",
+-    "object-sizeof": "^1.2.0",
+-    "react-draggable": "^3.0.5",
+-    "react-ga": "^2.5.3",
+-    "react-helmet": "^5.2.0",
+-    "react-portal": "^4.1.2",
+-    "react-transition-group": "^1.2.1",
+-    "safe-monada": "^2.3.2",
+-    "stacktrace-js": "^1.3.1",
+-    "superagent": "^3.5.2",
+-    "useragent.js": "^0.5.6"
++    "image-signature-manager-component": "^1.2.50"
+   }
+ }
+diff --git a/packages/jsfcore/package.json b/packages/jsfcore/package.json
+index 7ecf2ac7c..44c0ff2e2 100644
+--- a/packages/jsfcore/package.json
++++ b/packages/jsfcore/package.json
+@@ -69,7 +69,6 @@
+     "hammerjs": "^2.0.8",
+     "image-signature-manager-component": "1.2.31",
+     "is-retina": "^1.0.3",
+-    "jsfcore": "^2.2.0",
+     "jsfiller.ui": "0.0.94",
+     "lodash": "^4.17.4",
+     "log4js": "^1.1.1",
+@@ -82,7 +81,7 @@
+     "npm-run-all": "^4.0.2",
+     "numeral": "^2.0.6",
+     "object-hash": "^1.2.0",
+-    "page-rearrange": "1.1.9",
++    "page-rearrange": "2.0.18",
+     "pdf-render-component": "1.1.75",
+     "perfect-scrollbar-ji": "^0.6.20",
+     "prop-types": "^15.6.2",
+@@ -128,8 +127,7 @@
+     "webfontloader": "^1.6.28",
+     "webpack": "^2.2.1",
+     "webpack-vendors-commons": "1.1.11",
+-    "websocket-client": "1.0.33",
+-    "ws-editor-lib": "2.5.7"
++    "websocket-client": "1.0.33"
+   },
+   "devDependencies": {
+     "@pdffiller/jsfiller-tests-runner": "^1.1.1",
+diff --git a/packages/jsfiller3/config/development.json b/packages/jsfiller3/config/development.json
+index 2b07fd448..b55e58a8c 100644
+--- a/packages/jsfiller3/config/development.json
++++ b/packages/jsfiller3/config/development.json
+@@ -8,5 +8,5 @@
+       }
+     }
+   },
+-  "useEslintLoader": true
++  "useEslintLoader": false
+ }
+diff --git a/packages/jsfiller3/package.json b/packages/jsfiller3/package.json
+index 801f2aa87..c035de175 100644
+--- a/packages/jsfiller3/package.json
++++ b/packages/jsfiller3/package.json
+@@ -139,7 +139,6 @@
+     "hot-shots": "4.7.0",
+     "image-signature-manager-component": "^1.2.50",
+     "is-retina": "^1.0.3",
+-    "jsfcore": "^2.6.1",
+     "jsfiller.ui": "0.0.101",
+     "lodash": "^4.17.4",
+     "log4js": "^2.3.4",
+@@ -201,8 +200,7 @@
+     "webfontloader": "^1.6.28",
+     "webpack": "^2.6.1",
+     "webpack-vendors-commons": "1.1.12",
+-    "websocket-client": "1.0.35",
+-    "ws-editor-lib": "2.5.7"
++    "websocket-client": "1.0.35"
+   },
+   "devDependencies": {
+     "@pdffiller/jsfiller-tests-runner": "^1.1.1",
+diff --git a/packages/jsfiller3/src/modules/serverLogger/utils/getJSFCoreVersion.js b/packages/jsfiller3/src/modules/serverLogger/utils/getJSFCoreVersion.js
+index d11121e0b..8971db55c 100644
+--- a/packages/jsfiller3/src/modules/serverLogger/utils/getJSFCoreVersion.js
++++ b/packages/jsfiller3/src/modules/serverLogger/utils/getJSFCoreVersion.js
+@@ -1,6 +1,6 @@
+ const getJSFCoreVersion = () => {
+   // eslint-disable-next-line
+-  return require('jsfcore/../package.json').version;
++  return require('jsfcore/package.json').version;
+ };
+ 
+ export default getJSFCoreVersion;
+diff --git a/packages/jsfiller3/src/modules/serverLogger/utils/getWSLibVersion.js b/packages/jsfiller3/src/modules/serverLogger/utils/getWSLibVersion.js
+index 42a3df215..ad8181e12 100644
+--- a/packages/jsfiller3/src/modules/serverLogger/utils/getWSLibVersion.js
++++ b/packages/jsfiller3/src/modules/serverLogger/utils/getWSLibVersion.js
+@@ -1,6 +1,6 @@
+ const getWSLibVersion = () => {
+   // eslint-disable-next-line
+-  return require('ws-editor-lib/../package.json').version;
++  return require('ws-editor-lib/package.json').version;
+ };
+ 
+ export default getWSLibVersion;
+diff --git a/packages/jsfiller3/webpack/es6modules.js b/packages/jsfiller3/webpack/es6modules.js
+index 74405f1a3..bf875bc65 100644
+--- a/packages/jsfiller3/webpack/es6modules.js
++++ b/packages/jsfiller3/webpack/es6modules.js
+@@ -1,3 +1,6 @@
+ module.exports = [
+   /react-select-pdffiller/,
++  /node_modules\/react-select-pdffiller/,
++  /jsfcore/,
++  /ws-editor-lib/,
+ ];
+diff --git a/packages/jsfiller3/webpack/webpack.config.js b/packages/jsfiller3/webpack/webpack.config.js
+index b31577c6a..bc2f2c151 100644
+--- a/packages/jsfiller3/webpack/webpack.config.js
++++ b/packages/jsfiller3/webpack/webpack.config.js
+@@ -4,7 +4,7 @@ const fs = require('fs');
+ const webpack = require('webpack');
+ const modulePath = require('./module-path');
+ 
+-const jsfcorePath = modulePath('jsfcore');
++// const jsfcorePath = modulePath('jsfcore');
+ const rootFolder = path.resolve(__dirname, '..');
+ const assetsPath = path.resolve(rootFolder, 'static', 'dist');
+ 
+@@ -72,22 +72,21 @@ const configuration = {
+   resolve: {
+       modules: [
+         path.resolve(__dirname, '..', 'src'),
+-        path.resolve('node_modules')
++        path.resolve('node_modules'),
++        path.resolve('../../node_modules')
+       ],
+       alias: {
+-        components: path.resolve(__dirname, '../src/components'),
+-        modules: path.resolve(__dirname, '../src/modules'),
+-        jsfcore: jsfcorePath,
+-        'ws-editor-lib': modulePath('ws-editor-lib'),
+-        'image-signature-manager-component': modulePath('image-signature-manager-component'),
+-        'page-rearrange': modulePath('page-rearrange'),
+-        'pdf-render-component': modulePath('pdf-render-component'),
++        components: path.resolve(process.cwd(), './src/components'),
++        modules: path.resolve(process.cwd(), './src/modules'),
++        'image-signature-manager-component': path.resolve(process.cwd(), '../../node_modules/image-signature-manager-component/lib/'),
++        'page-rearrange': path.resolve(process.cwd(), '../../node_modules/page-rearrange/lib/'),
++        'pdf-render-component': path.resolve(process.cwd(), '../../node_modules/pdf-render-component/lib/'),
+       },
+   },
+ 
+   plugins: [
+     new webpack.DefinePlugin({
+-      JSFCORE_VERSION: '"' + fs.readFileSync(path.resolve(jsfcorePath, '../version.txt'), 'utf8')
++      JSFCORE_VERSION: '"' + fs.readFileSync(path.resolve('../../node_modules/jsfcore', 'version.txt'), 'utf8')
+         .replace(/(\r\n|\n|\r)/gm, '') + '"',
+     })
+   ]
+diff --git a/packages/ws-editor-lib/controllers/NetController/index.js b/packages/ws-editor-lib/controllers/NetController/index.js
+index 42d1f6f25..0968cb606 100644
+--- a/packages/ws-editor-lib/controllers/NetController/index.js
++++ b/packages/ws-editor-lib/controllers/NetController/index.js
+@@ -15,7 +15,7 @@ import {
+ } from '../../store/models/Operations/Utils';
+ import { getUserAndAPIHash, getParameterByName, getHostname, isLocalhost } from '../../store/helpers';
+ import actions from '../../actions';
+-import config from '../../../config';
++import config from '../../config';
+ import { getFilteredOperations } from './netControllerUtils';
+ 
+ import getOptimizeAndSend from './optimizeAndSend';
+-- 
+2.17.1 (Apple Git-112)
+

@@ -207,7 +207,7 @@ const mvBranch = async ({ branch, projects }) => {
 };
 
 const mvSrc = ({ project, projectBranch }) =>
-  promiseSpawn('bash', ['../mvsrc.sh', projectBranch, project]);
+  promiseSpawn('bash', ['../mvsrc.sh', projectBranch, project], true);
 
 const mvProjectBranch = ({ project, projectBranch }) =>
   promiseSpawn('bash', ['../mvcommit.sh', projectBranch, project]);
@@ -240,21 +240,30 @@ const octopusMerge = async ({ projectNames, branch, projects }) =>
   const groupped = await groupBranches(branchesSource);
   // logBranchByAuthor(groupped);
   // console.log(JSON.stringify(groupped));
-  const develop = pick(groupped, ['develop'])
-  for (var branch in develop) {
-    if (develop.hasOwnProperty(branch)) {
-      console.log('mergeBranch', branch);
-      await mvBranch({ branch, projects: pick(develop[branch], projectNames) })
+  const selectedBranches = pick(groupped, ['develop', 'releases/2.11.1', 'releases/2.11.5', 'releases/2.11.6'])
+  for (var branch in selectedBranches) {
+    if (selectedBranches.hasOwnProperty(branch)) {
+      console.log('mvBranch', branch);
+      await mvBranch({ branch, projects: pick(selectedBranches[branch], projectNames) })
     }
   }
 
-  for (var branch in develop) {
-    if (develop.hasOwnProperty(branch)) {
+  for (var branch in selectedBranches) {
+    if (selectedBranches.hasOwnProperty(branch)) {
       // console.log('mergeBranch', { branch, projects: pick(develop[branch], projectNames) });
-      const projects = pick(develop[branch], projectNames);
+      const projects = pick(selectedBranches[branch], projectNames);
       await octopusMerge({ projectNames, branch, projects });
     }
   }
+
+  // Commit
+  // await promiseSpawn('git', ['apply', '../patchs/webpack4/0001-Added-scripts-for-build-deploy.patch'])
+  // await promiseSpawn('git', ['add', '.']);
+  // await promiseSpawn('git', ['commit', '-m', 'Added scripts for build-deploy']);
+  //
+  // await promiseSpawn('git', ['apply', '../patchs/webpack4/0002-Reanimation-jsfiller3-snfiller.patch'])
+  // await promiseSpawn('git', ['add', '.']);
+  // await promiseSpawn('git', ['commit', '-m', 'Reanimation jsfiller3-snfiller']);
 
   // console.log(develop);
 })()
