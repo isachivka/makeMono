@@ -35,19 +35,19 @@ const fetch = (projectName) => new Promise((resolve) => {
 
 const getBranchesSource = () => new Promise(function(resolve) {
   const proc = spawn('git', ['branch', '--remote'], { cwd: resultPath });
-  const result = [];
+  let resultStr = '';
   proc.stdout.on('data', (data) => {
-    result.push(
-      data
-        .toString('utf-8')
+    resultStr += data.toString('utf-8');
+  });
+  
+  const re = /\n(\s{2}.+)\n(\S+)/g;
+  proc.on('close', (code) => {
+    resolve(flatten(
+      resultStr
         .split('\n')
         .map(line => line.trim())
         .filter(line => line)
-    )
-  });
-  proc.on('close', (code) => {
-    console.log({ code });
-    resolve(flatten(result));
+    ));
   });
 });
 
@@ -222,17 +222,17 @@ const octopusMerge = async ({ projectNames, branch, projects }) =>
   );
 
 ;(async () => {
-  console.log('initResult');
-  await initResult();
-  await Promise.all(
-    projectNames.map(async (projectName) => {
-      const git = reps[projectName];
-      await addRemote(projectName, git);
-      console.log('addRemote');
-      await fetch(projectName);
-      console.log('fetch');
-    })
-  )
+  // console.log('initResult');
+  // await initResult();
+  // await Promise.all(
+  //   projectNames.map(async (projectName) => {
+  //     const git = reps[projectName];
+  //     await addRemote(projectName, git);
+  //     console.log('addRemote');
+  //     await fetch(projectName);
+  //     console.log('fetch');
+  //   })
+  // )
 
   console.log('getBranchesSource');
   const branchesSource = await getBranchesSource();
@@ -240,7 +240,18 @@ const octopusMerge = async ({ projectNames, branch, projects }) =>
   const groupped = await groupBranches(branchesSource);
   // logBranchByAuthor(groupped);
   // console.log(JSON.stringify(groupped));
-  const selectedBranches = pick(groupped, ['develop', 'releases/2.11.1', 'releases/2.11.5', 'releases/2.11.6'])
+  const selectedBranches = pick(groupped, [
+    // 'develop',
+    // 'releases/2.14',
+    'releases/2.13.1',
+    // 'releases/2.13',
+    // 'releases/2.12',
+    // 'releases/2.11.1',
+    // 'experiments/2.13/mobile',
+  ]);
+
+  console.log(JSON.stringify({ branchesSource, groupped, selectedBranches }));
+
   for (var branch in selectedBranches) {
     if (selectedBranches.hasOwnProperty(branch)) {
       console.log('mvBranch', branch);
