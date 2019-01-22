@@ -1,9 +1,10 @@
 #!/bin/bash
 
 git checkout -B local/$1 $1
-bash ../mv.sh $2 > /dev/null
-git add .
-git commit -m "Moved project to packages/* folder" > /dev/null
+# bash ../mv.sh $2 > /dev/null
+# git add .
+# git commit -m "Moved project to packages/* folder" > /dev/null
+
 # git checkout master
 # git checkout -b $3
 # git checkout $3

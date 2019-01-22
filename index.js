@@ -241,16 +241,16 @@ const octopusMerge = async ({ projectNames, branch, projects }) =>
   // logBranchByAuthor(groupped);
   // console.log(JSON.stringify(groupped));
   const selectedBranches = pick(groupped, [
-    // 'develop',
+    'develop',
     // 'releases/2.14',
-    'releases/2.13.1',
+    // 'releases/2.13.1',
     // 'releases/2.13',
     // 'releases/2.12',
     // 'releases/2.11.1',
     // 'experiments/2.13/mobile',
   ]);
 
-  console.log(JSON.stringify({ branchesSource, groupped, selectedBranches }));
+  console.log(JSON.stringify({ selectedBranches }));
 
   for (var branch in selectedBranches) {
     if (selectedBranches.hasOwnProperty(branch)) {
