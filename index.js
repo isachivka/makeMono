@@ -241,16 +241,21 @@ const octopusMerge = async ({ projectNames, branch, projects }) =>
   // logBranchByAuthor(groupped);
   // console.log(JSON.stringify(groupped));
   const selectedBranches = pick(groupped, [
-    'develop',
+    // 'develop',
     // 'releases/2.14',
     // 'releases/2.13.1',
     // 'releases/2.13',
     // 'releases/2.12',
     // 'releases/2.11.1',
+    // 'experiments/2.13.2/as',
+    // 'experiments/2.13.3/esp',
     // 'experiments/2.13/mobile',
+    // 'feature/SNF-729-left-right-panel'
+    // 'feature/SNF-251-welcome-dialog'
+    'feature/SNF-610-integrtaion-field-initial-name'
   ]);
 
-  console.log(JSON.stringify({ selectedBranches }));
+  console.log(JSON.stringify({ groupped }));
 
   for (var branch in selectedBranches) {
     if (selectedBranches.hasOwnProperty(branch)) {
